@@ -90,8 +90,8 @@ dependencies {
     implementation(libs.firebase.messaging)
     implementation(libs.firebase.analytics)
 
-    // Gemini AI - Using REST API directly instead of SDK
-    // implementation(libs.google.generativeai) // Commented out - SDK not available in standard repos
+    // Gemini AI
+    implementation(libs.google.generativeai)
 
     // Testing
     testImplementation(libs.junit)

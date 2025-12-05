@@ -11,6 +11,14 @@ class ActivityRepositoryHybrid(
     private val firebaseService: FirebaseRealtimeService,   
     private val networkMonitor: NetworkMonitor
 ) {
+    fun getAllActivities(): Flow<List<Activity>> {
+        return if (networkMonitor.isNetworkAvailable()) {
+            firebaseService.observeAllActivities()
+        } else {
+            activityDao.getAllActivities()
+        }
+    }
+    
     fun getActivitiesByTravel(travelId: String): Flow<List<Activity>> {
         return if (networkMonitor.isNetworkAvailable()) {
             // Use Firebase for real-time updates

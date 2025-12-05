@@ -55,10 +55,15 @@ fun BudgetScreen() {
     val coroutineScope = rememberCoroutineScope()
     var selectedTravelIndex by remember { mutableIntStateOf(0) }
     
-    // Load first travel's budget if available
-    LaunchedEffect(travels) {
-        if (travels.isNotEmpty() && budgetItems.isEmpty()) {
-            budgetViewModel.loadBudgetItems(travels.first().id)
+    // Always keep budget data in sync with the selected travel
+    LaunchedEffect(travels, selectedTravelIndex) {
+        if (travels.isNotEmpty()) {
+            val clampedIndex = selectedTravelIndex.coerceIn(0, travels.lastIndex)
+            if (clampedIndex != selectedTravelIndex) {
+                selectedTravelIndex = clampedIndex
+            }
+            val travelId = travels[clampedIndex].id
+            budgetViewModel.loadBudgetItems(travelId)
         }
     }
     

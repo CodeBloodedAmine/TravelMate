@@ -11,6 +11,9 @@ interface ActivityDao {
 
     @Query("SELECT * FROM activities WHERE travelId = :travelId ORDER BY date ASC")
     fun getActivitiesByTravel(travelId: String): Flow<List<Activity>>
+    
+    @Query("SELECT * FROM activities ORDER BY date ASC")
+    fun getAllActivities(): Flow<List<Activity>>
 
     @Query("SELECT * FROM activities WHERE travelId = :travelId AND date >= :startDate AND date <= :endDate ORDER BY date ASC")
     fun getActivitiesByDateRange(travelId: String, startDate: Long, endDate: Long): Flow<List<Activity>>

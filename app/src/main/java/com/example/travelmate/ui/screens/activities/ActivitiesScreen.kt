@@ -27,8 +27,9 @@ fun ActivitiesScreen(
     val activities by viewModel.activities.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     
-    // Note: This screen shows all activities. In a full implementation,
-    // you might want to filter by travel or show activities for current user
+    LaunchedEffect(Unit) {
+        viewModel.loadAllActivities()
+    }
     
     Column(
         modifier = Modifier

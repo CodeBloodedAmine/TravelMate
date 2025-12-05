@@ -5,14 +5,19 @@ import androidx.lifecycle.viewModelScope
 import com.example.travelmate.data.models.Activity
 import com.example.travelmate.data.models.ActivityCategory
 import com.example.travelmate.data.repository.ActivityRepositoryHybrid
+import com.example.travelmate.data.repository.TravelRepositoryHybrid
 import com.example.travelmate.util.ModelHelpers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.util.UUID
 
-class ActivityViewModel(private val activityRepository: ActivityRepositoryHybrid) : ViewModel() {
+class ActivityViewModel(
+    private val activityRepository: ActivityRepositoryHybrid,
+    private val travelRepository: TravelRepositoryHybrid
+) : ViewModel() {
     private val _activities = MutableStateFlow<List<Activity>>(emptyList())
     val activities: StateFlow<List<Activity>> = _activities.asStateFlow()
     
@@ -21,6 +26,22 @@ class ActivityViewModel(private val activityRepository: ActivityRepositoryHybrid
     
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error.asStateFlow()
+    
+    fun loadAllActivities() {
+        viewModelScope.launch {
+            _isLoading.value = true
+            try {
+                activityRepository.getAllActivities().collect { activitiesList ->
+                    _activities.value = activitiesList
+                    _isLoading.value = false
+                    _error.value = null
+                }
+            } catch (e: Exception) {
+                _isLoading.value = false
+                _error.value = e.message
+            }
+        }
+    }
     
     fun loadActivitiesByTravel(travelId: String) {
         viewModelScope.launch {
@@ -75,6 +96,14 @@ class ActivityViewModel(private val activityRepository: ActivityRepositoryHybrid
                 )
                 
                 activityRepository.insertActivity(activity)
+                
+                // Update travel spent amount with the activity cost
+                val travel = travelRepository.getTravelById(travelId).first()
+                if (travel != null && activity.cost > 0) {
+                    val updated = travel.copy(spentAmount = travel.spentAmount + activity.cost)
+                    travelRepository.updateTravel(updated)
+                }
+
                 _error.value = null
                 loadActivitiesByTravel(travelId)
             } catch (e: Exception) {

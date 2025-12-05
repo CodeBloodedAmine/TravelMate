@@ -28,7 +28,7 @@ class ViewModelFactory(
                 TravelViewModel(travelRepository) as T
             }
             modelClass.isAssignableFrom(ActivityViewModel::class.java) -> {
-                ActivityViewModel(activityRepository) as T
+                ActivityViewModel(activityRepository, travelRepository) as T
             }
             modelClass.isAssignableFrom(BudgetViewModel::class.java) -> {
                 BudgetViewModel(budgetRepository, travelRepository) as T

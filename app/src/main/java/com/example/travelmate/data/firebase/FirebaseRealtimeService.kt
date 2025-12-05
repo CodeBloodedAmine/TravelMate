@@ -88,17 +88,20 @@ class FirebaseRealtimeService {
             .addValueEventListener(object : ValueEventListener {
                 override fun onDataChange(snapshot: DataSnapshot) {
                     val travels = snapshot.children.mapNotNull { travelSnapshot ->
+                        // First try direct mapping
+                        val direct = travelSnapshot.getValue(Travel::class.java)
+                        if (direct != null) return@mapNotNull direct
+                        
+                        // Fallback manual parsing if shape differs
                         try {
                             val travelMap = travelSnapshot.value as? Map<*, *> ?: return@mapNotNull null
                             
-                            // Extract participantIds - Firebase stores lists as Map<String, Boolean> or List
                             val participantIdsList = when (val participants = travelMap["participantIds"]) {
                                 is Map<*, *> -> participants.keys.mapNotNull { it.toString() }
                                 is List<*> -> participants.mapNotNull { it.toString() }
                                 else -> emptyList<String>()
                             }
                             
-                            // Extract itinerary - Firebase stores as Map or List
                             val itineraryList = when (val itinerary = travelMap["itinerary"]) {
                                 is Map<*, *> -> itinerary.values.mapNotNull { item ->
                                     val itemMap = item as? Map<*, *> ?: return@mapNotNull null
@@ -286,6 +289,22 @@ class FirebaseRealtimeService {
         val listener = database.child("activities")
             .orderByChild("travelId")
             .equalTo(travelId)
+            .addValueEventListener(object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    val activities = snapshot.children.mapNotNull { it.getValue(Activity::class.java) }
+                    trySend(activities)
+                }
+                
+                override fun onCancelled(error: DatabaseError) {
+                    close(error.toException())
+                }
+            })
+        
+        awaitClose { database.removeEventListener(listener) }
+    }
+    
+    fun observeAllActivities(): Flow<List<Activity>> = callbackFlow {
+        val listener = database.child("activities")
             .addValueEventListener(object : ValueEventListener {
                 override fun onDataChange(snapshot: DataSnapshot) {
                     val activities = snapshot.children.mapNotNull { it.getValue(Activity::class.java) }

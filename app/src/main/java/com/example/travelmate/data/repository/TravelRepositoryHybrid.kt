@@ -5,6 +5,7 @@ import com.example.travelmate.data.room.TravelDao
 import com.example.travelmate.data.firebase.FirebaseRealtimeService
 import com.example.travelmate.util.NetworkMonitor
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
 
 class TravelRepositoryHybrid(
     private val travelDao: TravelDao,
@@ -29,7 +30,13 @@ class TravelRepositoryHybrid(
 
     fun getAllTravels(): Flow<List<Travel>> {
         return if (networkMonitor.isNetworkAvailable()) {
-            firebaseService.observeAllTravels()
+            // Prefer Firebase; if Firebase is empty (rules/data), fallback to local cache
+            combine(
+                firebaseService.observeAllTravels(),
+                travelDao.getAllTravels()
+            ) { remote, local ->
+                if (remote.isNotEmpty()) remote else local
+            }
         } else {
             // Fallback to local cache when offline
             travelDao.getAllTravels()
