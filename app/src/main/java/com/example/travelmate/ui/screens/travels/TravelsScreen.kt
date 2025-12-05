@@ -18,6 +18,7 @@ import com.example.travelmate.ui.composables.travelMateViewModel
 import com.example.travelmate.ui.viewmodel.TravelViewModel
 import com.example.travelmate.ui.theme.Orange40
 import com.example.travelmate.ui.theme.Turquoise40
+import com.example.travelmate.util.SessionManager
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -29,6 +30,10 @@ fun TravelsScreen(
     val viewModel: TravelViewModel = travelMateViewModel()
     val travels by viewModel.travels.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
+    
+    // Get user role for permission check
+    val userRole = SessionManager.getUserRole()
+    val isOrganiser = userRole?.name == "ORGANISER"
 
     LaunchedEffect(Unit) {
         viewModel.loadTravels()
@@ -36,15 +41,17 @@ fun TravelsScreen(
 
     Scaffold(
         floatingActionButton = {
-            FloatingActionButton(
-                onClick = onNavigateToCreateTravel,
-                containerColor = Turquoise40
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = "Nouveau voyage",
-                    tint = MaterialTheme.colorScheme.onPrimary
-                )
+            if (isOrganiser) {
+                FloatingActionButton(
+                    onClick = onNavigateToCreateTravel,
+                    containerColor = Turquoise40
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = "Nouveau voyage",
+                        tint = MaterialTheme.colorScheme.onPrimary
+                    )
+                }
             }
         }
     ) { paddingValues ->
@@ -111,10 +118,13 @@ fun TravelCard(
     travel: Travel,
     onClick: () -> Unit
 ) {
+    val viewModel: TravelViewModel = travelMateViewModel()
+    val currentUserId = SessionManager.getCurrentUserId()
+    val isParticipant = travel.participantIds.contains(currentUserId)
     val dateFormat = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
+    var isJoining by remember { mutableStateOf(false) }
     
     Card(
-        onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
@@ -176,6 +186,31 @@ fun TravelCard(
                 color = Turquoise40,
                 trackColor = MaterialTheme.colorScheme.surfaceVariant
             )
+            
+            Spacer(modifier = Modifier.height(12.dp))
+            
+            // Action button
+            if (isParticipant) {
+                Button(
+                    onClick = onClick,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(containerColor = Turquoise40)
+                ) {
+                    Text("Voir le voyage")
+                }
+            } else {
+                Button(
+                    onClick = {
+                        isJoining = true
+                        viewModel.participateInTravel(travel.id)
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = !isJoining,
+                    colors = ButtonDefaults.buttonColors(containerColor = Orange40)
+                ) {
+                    Text(if (isJoining) "Rejoindre..." else "Rejoindre le voyage")
+                }
+            }
         }
     }
 }

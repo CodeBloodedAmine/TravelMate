@@ -3,14 +3,14 @@ package com.example.travelmate.ui.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.travelmate.data.models.Travel
-import com.example.travelmate.data.repository.TravelRepository
+import com.example.travelmate.data.repository.TravelRepositoryHybrid
 import com.example.travelmate.util.SessionManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-class HomeViewModel(private val travelRepository: TravelRepository) : ViewModel() {
+class HomeViewModel(private val travelRepository: TravelRepositoryHybrid) : ViewModel() {
     private val _travels = MutableStateFlow<List<Travel>>(emptyList())
     val travels: StateFlow<List<Travel>> = _travels.asStateFlow()
     

@@ -2,14 +2,13 @@ package com.example.travelmate.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.travelmate.data.models.User
+import com.example.travelmate.data.firebase.FirebaseAuthService
 import com.example.travelmate.data.models.UserRole
 import com.example.travelmate.data.repository.UserRepository
 import com.example.travelmate.util.SessionManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import java.util.UUID
 
 data class AuthState(
     val isLoading: Boolean = false,
@@ -17,7 +16,10 @@ data class AuthState(
     val errorMessage: String? = null
 )
 
-class AuthViewModel(private val userRepository: UserRepository) : ViewModel() {
+class AuthViewModel(
+    private val firebaseAuthService: FirebaseAuthService,
+    private val userRepository: UserRepository
+) : ViewModel() {
     private val _authState = MutableStateFlow(AuthState(isLoggedIn = SessionManager.isLoggedIn()))
     val authState: StateFlow<AuthState> = _authState
     
@@ -26,7 +28,9 @@ class AuthViewModel(private val userRepository: UserRepository) : ViewModel() {
     }
     
     private fun checkLoginStatus() {
-        _authState.value = _authState.value.copy(isLoggedIn = SessionManager.isLoggedIn())
+        val firebaseUser = firebaseAuthService.getCurrentUser()
+        val isLoggedIn = firebaseUser != null && SessionManager.isLoggedIn()
+        _authState.value = _authState.value.copy(isLoggedIn = isLoggedIn)
     }
     
     fun login(email: String, password: String) {
@@ -34,17 +38,36 @@ class AuthViewModel(private val userRepository: UserRepository) : ViewModel() {
             _authState.value = _authState.value.copy(isLoading = true, errorMessage = null)
             
             try {
-                val user = userRepository.getUserByEmail(email)
+                val result = firebaseAuthService.signIn(email, password)
                 
-                if (user != null) {
-                    // In a real app, verify password hash here
-                    SessionManager.saveSession(user.id, user.email, user.name)
-                    _authState.value = _authState.value.copy(
-                        isLoading = false,
-                        isLoggedIn = true,
-                        errorMessage = null
-                    )
-                } else {
+                result.onSuccess { firebaseUser ->
+                    // Get user profile from Firebase
+                    val profileResult = firebaseAuthService.getUserProfile(firebaseUser.uid)
+                    profileResult.onSuccess { user ->
+                        if (user != null) {
+                            // Save to local Room for offline access
+                            userRepository.insertUser(user)
+                            SessionManager.saveSession(user.id, user.email, user.name, user.role)
+                            
+                            _authState.value = _authState.value.copy(
+                                isLoading = false,
+                                isLoggedIn = true,
+                                errorMessage = null
+                            )
+                        } else {
+                            _authState.value = _authState.value.copy(
+                                isLoading = false,
+                                isLoggedIn = false,
+                                errorMessage = "Profil utilisateur introuvable"
+                            )
+                        }
+                    }.onFailure { e ->
+                        _authState.value = _authState.value.copy(
+                            isLoading = false,
+                            errorMessage = "Erreur lors de la récupération du profil: ${e.message}"
+                        )
+                    }
+                }.onFailure { e ->
                     _authState.value = _authState.value.copy(
                         isLoading = false,
                         isLoggedIn = false,
@@ -59,39 +82,54 @@ class AuthViewModel(private val userRepository: UserRepository) : ViewModel() {
             }
         }
     }
-    
-    fun register(name: String, email: String, password: String) {
+
+    fun register(name: String, email: String, password: String, role: UserRole = UserRole.PARTICIPANT) {
         viewModelScope.launch {
             _authState.value = _authState.value.copy(isLoading = true, errorMessage = null)
-            
+
             try {
-                // Check if user already exists
-                val existingUser = userRepository.getUserByEmail(email)
-                if (existingUser != null) {
+                val result = firebaseAuthService.signUp(email, password, name, role)
+
+                result.onSuccess { firebaseUser ->
+                    // User profile is already created in Firebase by FirebaseAuthService
+                    val profileResult = firebaseAuthService.getUserProfile(firebaseUser.uid)
+                    profileResult.onSuccess { user ->
+                        if (user != null) {
+                            // Save to local Room for offline access
+                            userRepository.insertUser(user)
+                            SessionManager.saveSession(user.id, user.email, user.name, user.role)
+
+                            _authState.value = _authState.value.copy(
+                                isLoading = false,
+                                isLoggedIn = true,
+                                errorMessage = null
+                            )
+                        } else {
+                            _authState.value = _authState.value.copy(
+                                isLoading = false,
+                                isLoggedIn = false,
+                                errorMessage = "Erreur lors de la création du profil"
+                            )
+                        }
+                    }.onFailure { e ->  // error handler
+                        _authState.value = _authState.value.copy(
+                            isLoading = false,
+                            isLoggedIn = false,
+                            errorMessage = "Erreur lors de la récupération du profil: ${e.message}"
+                        )
+                    }
+                }.onFailure { e ->
                     _authState.value = _authState.value.copy(
                         isLoading = false,
-                        errorMessage = "Un compte avec cet email existe déjà"
+                        errorMessage = when {
+                            e.message?.contains("email-already-in-use") == true ->
+                                "Un compte avec cet email existe déjà"
+                            e.message?.contains("weak-password") == true ->
+                                "Le mot de passe est trop faible"
+                            else -> "Erreur d'inscription: ${e.message}"
+                        }
                     )
-                    return@launch
                 }
-                
-                // Create new user
-                val newUser = User(
-                    id = UUID.randomUUID().toString(),
-                    email = email,
-                    name = name,
-                    role = UserRole.PARTICIPANT,
-                    createdAt = System.currentTimeMillis()
-                )
-                
-                userRepository.insertUser(newUser)
-                SessionManager.saveSession(newUser.id, newUser.email, newUser.name)
-                
-                _authState.value = _authState.value.copy(
-                    isLoading = false,
-                    isLoggedIn = true,
-                    errorMessage = null
-                )
             } catch (e: Exception) {
                 _authState.value = _authState.value.copy(
                     isLoading = false,
@@ -102,8 +140,8 @@ class AuthViewModel(private val userRepository: UserRepository) : ViewModel() {
     }
     
     fun logout() {
+        firebaseAuthService.signOut()
         SessionManager.clearSession()
         _authState.value = AuthState(isLoggedIn = false)
     }
 }
-

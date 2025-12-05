@@ -5,19 +5,37 @@ import com.example.travelmate.data.room.MessageDao
 import kotlinx.coroutines.flow.Flow
 
 class MessageRepository(private val messageDao: MessageDao) {
-    fun getMessagesByTravel(travelId: String): Flow<List<Message>> = messageDao.getMessagesByTravel(travelId)
     
-    fun getPrivateMessages(userId: String, otherUserId: String): Flow<List<Message>> = 
-        messageDao.getPrivateMessages(userId, otherUserId)
+    // ✅ Get messages for a travel (GROUP CHAT)
+    fun getMessagesByTravelId(travelId: String): Flow<List<Message>> = 
+        messageDao.getMessagesByTravelId(travelId)
     
-    fun getMessageById(messageId: String): Flow<Message?> = messageDao.getMessageById(messageId)
+    // ✅ Get a single message
+    fun getMessageById(messageId: String): Flow<Message?> = 
+        messageDao.getMessageById(messageId)
     
-    suspend fun insertMessage(message: Message) = messageDao.insertMessage(message)
+    // ✅ Insert a message
+    suspend fun insertMessage(message: Message) = 
+        messageDao.insertMessage(message)
     
-    suspend fun updateMessage(message: Message) = messageDao.updateMessage(message)
+    // ✅ Insert multiple messages
+    suspend fun insertMessages(messages: List<Message>) = 
+        messageDao.insertMessages(messages)
     
-    suspend fun markMessagesAsRead(travelId: String, userId: String) = messageDao.markMessagesAsRead(travelId, userId)
+    // ✅ Update a message
+    suspend fun updateMessage(message: Message) = 
+        messageDao.updateMessage(message)
     
-    suspend fun deleteMessage(message: Message) = messageDao.deleteMessage(message)
+    // ✅ Mark a message as read
+    suspend fun markAsRead(messageId: String) = 
+        messageDao.markAsRead(messageId)
+    
+    // ✅ Delete a message
+    suspend fun deleteMessage(messageId: String) = 
+        messageDao.deleteMessage(messageId)
+    
+    // ✅ Get unread count for a travel
+    fun getUnreadCountByTravelId(travelId: String): Flow<Int> = 
+        messageDao.getUnreadCountByTravelId(travelId)
 }
 

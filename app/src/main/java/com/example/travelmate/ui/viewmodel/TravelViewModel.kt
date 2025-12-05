@@ -3,7 +3,7 @@ package com.example.travelmate.ui.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.travelmate.data.models.Travel
-import com.example.travelmate.data.repository.TravelRepository
+import com.example.travelmate.data.repository.TravelRepositoryHybrid
 import com.example.travelmate.util.SessionManager
 import com.example.travelmate.util.ModelHelpers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.util.UUID
 
-class TravelViewModel(private val travelRepository: TravelRepository) : ViewModel() {
+class TravelViewModel(private val travelRepository: TravelRepositoryHybrid) : ViewModel() {
     private val _travels = MutableStateFlow<List<Travel>>(emptyList())
     val travels: StateFlow<List<Travel>> = _travels.asStateFlow()
     
@@ -27,14 +27,9 @@ class TravelViewModel(private val travelRepository: TravelRepository) : ViewMode
         viewModelScope.launch {
             _isLoading.value = true
             try {
-                val userId = SessionManager.getCurrentUserId()
-                if (userId != null) {
-                    travelRepository.getOrganisedTravels(userId).collect { travelsList ->
-                        _travels.value = travelsList
-                        _isLoading.value = false
-                    }
-                } else {
-                    _travels.value = emptyList()
+                // Load ALL travels available
+                travelRepository.getAllTravels().collect { travelsList ->
+                    _travels.value = travelsList
                     _isLoading.value = false
                 }
             } catch (e: Exception) {
@@ -80,6 +75,10 @@ class TravelViewModel(private val travelRepository: TravelRepository) : ViewMode
                 )
                 
                 travelRepository.insertTravel(travel)
+                
+                // Create notifications for all users about this new travel
+                travelRepository.notifyAllUsersOfNewTravel(travel)
+                
                 loadTravels()
             } catch (e: Exception) {
                 // Handle error
@@ -89,6 +88,18 @@ class TravelViewModel(private val travelRepository: TravelRepository) : ViewMode
     
     fun refresh() {
         loadTravels()
+    }
+    
+    fun participateInTravel(travelId: String) {
+        viewModelScope.launch {
+            try {
+                val userId = SessionManager.getCurrentUserId() ?: return@launch
+                travelRepository.participateInTravel(travelId, userId)
+                loadTravels() // Reload to show updated travels
+            } catch (e: Exception) {
+                // Handle error
+            }
+        }
     }
 }
 

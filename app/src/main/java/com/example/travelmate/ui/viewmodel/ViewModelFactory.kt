@@ -7,18 +7,19 @@ import com.example.travelmate.data.repository.*
 
 class ViewModelFactory(
     private val userRepository: UserRepository,
-    private val travelRepository: TravelRepository,
-    private val activityRepository: ActivityRepository,
-    private val budgetRepository: BudgetRepository,
-    private val messageRepository: MessageRepository,
-    private val notificationRepository: NotificationRepository
+    private val travelRepository: TravelRepositoryHybrid,
+    private val activityRepository: ActivityRepositoryHybrid,
+    private val budgetRepository: BudgetRepositoryHybrid,
+    private val messageRepository: MessageRepositoryHybrid,
+    private val notificationRepository: NotificationRepositoryHybrid,
+    private val firebaseAuthService: com.example.travelmate.data.firebase.FirebaseAuthService
 ) : ViewModelProvider.Factory {
     
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         return when {
             modelClass.isAssignableFrom(AuthViewModel::class.java) -> {
-                AuthViewModel(userRepository) as T
+                AuthViewModel(firebaseAuthService, userRepository) as T
             }
             modelClass.isAssignableFrom(HomeViewModel::class.java) -> {
                 HomeViewModel(travelRepository) as T
@@ -47,16 +48,38 @@ class ViewModelFactory(
     
     companion object {
         fun create(context: android.content.Context): ViewModelFactory {
-            val database = (context.applicationContext as TravelMateApplication).database
+            val app = context.applicationContext as TravelMateApplication
+            val database = app.database
+            
             return ViewModelFactory(
                 userRepository = UserRepository(database.userDao()),
-                travelRepository = TravelRepository(database.travelDao()),
-                activityRepository = ActivityRepository(database.activityDao()),
-                budgetRepository = BudgetRepository(database.budgetDao()),
-                messageRepository = MessageRepository(database.messageDao()),
-                notificationRepository = NotificationRepository(database.notificationDao())
+                travelRepository = TravelRepositoryHybrid(
+                    database.travelDao(),
+                    app.firebaseRealtimeService,
+                    app.networkMonitor
+                ),
+                activityRepository = ActivityRepositoryHybrid(
+                    database.activityDao(),
+                    app.firebaseRealtimeService,
+                    app.networkMonitor
+                ),
+                budgetRepository = BudgetRepositoryHybrid(
+                    database.budgetDao(),
+                    app.firebaseRealtimeService,
+                    app.networkMonitor
+                ),
+                messageRepository = MessageRepositoryHybrid(
+                    database.messageDao(),
+                    app.firebaseRealtimeService,
+                    app.networkMonitor
+                ),
+                notificationRepository = NotificationRepositoryHybrid(
+                    database.notificationDao(),
+                    app.firebaseRealtimeService,
+                    app.networkMonitor
+                ),
+                firebaseAuthService = app.firebaseAuthService
             )
         }
     }
 }
-

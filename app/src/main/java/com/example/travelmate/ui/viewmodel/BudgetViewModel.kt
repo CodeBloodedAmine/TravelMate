@@ -4,8 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.travelmate.data.models.BudgetItem
 import com.example.travelmate.data.models.BudgetSummary
-import com.example.travelmate.data.repository.BudgetRepository
-import com.example.travelmate.data.repository.TravelRepository
+import com.example.travelmate.data.repository.BudgetRepositoryHybrid
+import com.example.travelmate.data.repository.TravelRepositoryHybrid
 import com.example.travelmate.util.ModelHelpers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -15,8 +15,8 @@ import kotlinx.coroutines.launch
 import java.util.UUID
 
 class BudgetViewModel(
-    private val budgetRepository: BudgetRepository,
-    private val travelRepository: TravelRepository
+    private val budgetRepository: BudgetRepositoryHybrid,
+    private val travelRepository: TravelRepositoryHybrid
 ) : ViewModel() {
     private val _budgetItems = MutableStateFlow<List<BudgetItem>>(emptyList())
     val budgetItems: StateFlow<List<BudgetItem>> = _budgetItems.asStateFlow()
@@ -53,16 +53,11 @@ class BudgetViewModel(
                 val expensesByCategory = items.groupBy { it.category }
                     .mapValues { it.value.sumOf { item -> item.amount } }
                 
-                val expensesByUser = items.groupBy { it.paidByUserId }
-                    .mapValues { it.value.sumOf { item -> item.amount } }
-                
                 _budgetSummary.value = BudgetSummary(
-                    travelId = travelId,
                     totalBudget = travel.budget,
                     totalSpent = totalSpent,
                     remaining = remaining,
-                    expensesByCategory = expensesByCategory,
-                    expensesByUser = expensesByUser
+                    expensesByCategory = expensesByCategory
                 )
             }
         } catch (e: Exception) {

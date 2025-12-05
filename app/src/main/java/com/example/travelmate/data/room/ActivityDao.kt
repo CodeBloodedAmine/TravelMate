@@ -16,7 +16,7 @@ interface ActivityDao {
     fun getActivitiesByDateRange(travelId: String, startDate: Long, endDate: Long): Flow<List<Activity>>
 
     // Search in JSON string - Room doesn't support native JSON queries
-    @Query("SELECT * FROM activities WHERE assignedParticipantIdsJson LIKE '%\"' || :userId || '\"%'")
+    @Query("SELECT * FROM activities WHERE assignedParticipantIds LIKE '%' || :userId || '%'")
     fun getActivitiesByUser(userId: String): Flow<List<Activity>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)

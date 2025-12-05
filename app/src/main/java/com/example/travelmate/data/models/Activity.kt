@@ -14,18 +14,10 @@ data class Activity(
     val date: Long,
     val time: String? = null,
     val location: String? = null,
-    val assignedParticipantIdsJson: String = "[]", // JSON string for List<String>
+    val assignedParticipantIds: List<String> = emptyList(),
     val cost: Double = 0.0,
     val category: ActivityCategory = ActivityCategory.OTHER,
     val imageUrl: String? = null,
     val createdAt: Long = System.currentTimeMillis()
-) {
-    // Helper property (not stored in DB)
-    val assignedParticipantIds: List<String>
-        get() = try {
-            com.google.gson.Gson().fromJson(assignedParticipantIdsJson, object : com.google.gson.reflect.TypeToken<List<String>>() {}.type) ?: emptyList()
-        } catch (e: Exception) {
-            emptyList()
-        }
-}
+)
 

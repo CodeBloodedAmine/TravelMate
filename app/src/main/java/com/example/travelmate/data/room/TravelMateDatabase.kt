@@ -16,7 +16,7 @@ import com.example.travelmate.data.models.*
         Message::class,
         Notification::class
     ],
-    version = 1,
+    version = 3,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -38,7 +38,10 @@ abstract class TravelMateDatabase : RoomDatabase() {
                     context.applicationContext,
                     TravelMateDatabase::class.java,
                     "travelmate_database"
-                ).build()
+                )
+                    // When schema changes, clear the database and rebuild
+                    .fallbackToDestructiveMigration()
+                    .build()
                 INSTANCE = instance
                 instance
             }

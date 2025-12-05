@@ -22,19 +22,13 @@ class BudgetRepository(private val budgetDao: BudgetDao) {
     suspend fun updateBudgetItem(budgetItem: BudgetItem) = budgetDao.updateBudgetItem(budgetItem)
     
     suspend fun deleteBudgetItem(budgetItem: BudgetItem) = budgetDao.deleteBudgetItem(budgetItem)
-    
-    // This method is now implemented in BudgetViewModel.calculateSummary()
-    // Keeping it for backward compatibility but it should use Flow
-    // Use BudgetViewModel.loadBudgetItems() and budgetSummary StateFlow instead
+
     suspend fun calculateBudgetSummary(travelId: String, totalBudget: Double): BudgetSummary {
-        // Note: This is a simplified version. Use BudgetViewModel instead
         return BudgetSummary(
-            travelId = travelId,
             totalBudget = totalBudget,
             totalSpent = 0.0,
             remaining = totalBudget,
-            expensesByCategory = emptyMap(),
-            expensesByUser = emptyMap()
+            expensesByCategory = emptyMap<com.example.travelmate.data.models.BudgetCategory, Double>()
         )
     }
 }

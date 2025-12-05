@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.travelmate.data.models.Activity
 import com.example.travelmate.data.models.ActivityCategory
-import com.example.travelmate.data.repository.ActivityRepository
+import com.example.travelmate.data.repository.ActivityRepositoryHybrid
 import com.example.travelmate.util.ModelHelpers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.util.UUID
 
-class ActivityViewModel(private val activityRepository: ActivityRepository) : ViewModel() {
+class ActivityViewModel(private val activityRepository: ActivityRepositoryHybrid) : ViewModel() {
     private val _activities = MutableStateFlow<List<Activity>>(emptyList())
     val activities: StateFlow<List<Activity>> = _activities.asStateFlow()
     

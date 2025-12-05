@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.travelmate.data.models.Message
 import com.example.travelmate.data.models.MessageType
-import com.example.travelmate.data.repository.MessageRepository
+import com.example.travelmate.data.repository.MessageRepositoryHybrid
 import com.example.travelmate.util.SessionManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -12,49 +12,104 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.util.UUID
 
-class MessageViewModel(private val messageRepository: MessageRepository) : ViewModel() {
-    private val _messages = MutableStateFlow<List<Message>>(emptyList())
-    val messages: StateFlow<List<Message>> = _messages.asStateFlow()
+data class MessageUiState(
+    val messages: List<Message> = emptyList(),
+    val isLoading: Boolean = false,
+    val error: String? = null,
+    val currentUserId: String? = null,
+    val isSending: Boolean = false
+)
+
+class MessageViewModel(private val messageRepository: MessageRepositoryHybrid) : ViewModel() {
+    private val _uiState = MutableStateFlow(MessageUiState(currentUserId = SessionManager.getCurrentUserId()))
+    val uiState: StateFlow<MessageUiState> = _uiState.asStateFlow()
     
-    private val _isLoading = MutableStateFlow(false)
-    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+    // For backward compatibility
+    val messages: StateFlow<List<Message>> = MutableStateFlow(emptyList())
+    val isLoading: StateFlow<Boolean> = MutableStateFlow(false)
+    
+    private var currentTravelId: String = ""
     
     fun loadMessages(travelId: String) {
+        currentTravelId = travelId
         viewModelScope.launch {
-            _isLoading.value = true
+            _uiState.value = _uiState.value.copy(isLoading = true, error = null)
             try {
-                messageRepository.getMessagesByTravel(travelId).collect { messagesList ->
-                    _messages.value = messagesList
-                    _isLoading.value = false
+                messageRepository.getMessagesByTravelId(travelId).collect { messagesList ->
+                    _uiState.value = _uiState.value.copy(
+                        messages = messagesList.sortedBy { it.timestamp },
+                        isLoading = false
+                    )
                 }
             } catch (e: Exception) {
-                _isLoading.value = false
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    error = "Erreur lors du chargement des messages: ${e.message}"
+                )
             }
         }
     }
     
     fun sendMessage(travelId: String, content: String) {
+        if (content.isBlank()) return
+        
         viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isSending = true, error = null)
             try {
-                val senderId = SessionManager.getCurrentUserId() ?: return@launch
+                val senderId = SessionManager.getCurrentUserId() ?: run {
+                    _uiState.value = _uiState.value.copy(
+                        isSending = false,
+                        error = "Erreur: Utilisateur non identifié"
+                    )
+                    return@launch
+                }
                 
                 val message = Message(
                     id = UUID.randomUUID().toString(),
                     travelId = travelId,
                     senderId = senderId,
-                    receiverId = null,
                     content = content,
-                    messageType = MessageType.TEXT,
+                    messageType = "TEXT",
                     timestamp = System.currentTimeMillis(),
-                    isRead = false
+                    read = false
                 )
                 
-                messageRepository.insertMessage(message)
-                loadMessages(travelId)
+                messageRepository.sendMessage(message).collect { result ->
+                    result.onSuccess {
+                        _uiState.value = _uiState.value.copy(isSending = false)
+                        // Reload messages to show the new one
+                        loadMessages(travelId)
+                    }.onFailure { exception ->
+                        _uiState.value = _uiState.value.copy(
+                            isSending = false,
+                            error = "Erreur lors de l'envoi du message: ${exception.message}"
+                        )
+                    }
+                }
             } catch (e: Exception) {
-                // Handle error
+                _uiState.value = _uiState.value.copy(
+                    isSending = false,
+                    error = "Erreur lors de l'envoi du message: ${e.message}"
+                )
             }
         }
+    }
+    
+    fun markMessagesAsRead(travelId: String) {
+        viewModelScope.launch {
+            try {
+                // Mark all messages in this travel as read
+                _uiState.value.messages.forEach { message ->
+                    messageRepository.markAsRead(message.id)
+                }
+            } catch (e: Exception) {
+                // Silently fail for read status
+            }
+        }
+    }
+    
+    fun clearError() {
+        _uiState.value = _uiState.value.copy(error = null)
     }
     
     fun refresh(travelId: String) {

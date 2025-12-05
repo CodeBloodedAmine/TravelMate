@@ -54,7 +54,9 @@ fun NavGraph(
                 onNavigateToTravels = { navController.navigate(Screen.Travels.route) },
                 onNavigateToTravelDetail = { travelId -> 
                     navController.navigate(Screen.TravelDetail.createRoute(travelId))
-                }
+                },
+                onNavigateToSearch = { navController.navigate(Screen.Travels.route) },
+                onNavigateToCreateTravel = { navController.navigate(Screen.CreateTravel.route) }
             )
         }
         
@@ -125,10 +127,11 @@ fun NavGraph(
         
         composable(Screen.Messaging.route) {
             MessagingScreen(
-                onNavigateToChatDetail = { travelId ->
+                onNavigateToChatDetail = { travelId, travelTitle ->
                     navController.navigate(Screen.ChatDetail.createRoute(travelId))
                 },
-                onNavigateToChatBot = { navController.navigate(Screen.ChatBot.route) }
+                onNavigateToChatBot = { navController.navigate(Screen.ChatBot.route) },
+                onNavigateToNewChat = { /* TODO: Navigate to new chat */ }
             )
         }
         
@@ -139,6 +142,7 @@ fun NavGraph(
             val travelId = backStackEntry.arguments?.getString("travelId") ?: ""
             ChatDetailScreen(
                 travelId = travelId,
+                travelTitle = "Chat de groupe",
                 onNavigateBack = { navController.popBackStack() }
             )
         }
@@ -157,7 +161,10 @@ fun NavGraph(
             ProfileScreen(
                 onLogout = { navController.navigate(Screen.Login.route) {
                     popUpTo(0) { inclusive = true }
-                }}
+                }},
+                onNavigateToSettings = { /* Navigate to settings */ },
+                onNavigateToHelp = { /* Navigate to help */ },
+                onNavigateToAbout = { /* Navigate to about */ }
             )
         }
     }

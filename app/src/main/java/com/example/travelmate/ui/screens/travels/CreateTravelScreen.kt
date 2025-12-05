@@ -15,6 +15,7 @@ import androidx.compose.ui.unit.sp
 import com.example.travelmate.ui.composables.travelMateViewModel
 import com.example.travelmate.ui.viewmodel.TravelViewModel
 import com.example.travelmate.ui.theme.Turquoise40
+import com.example.travelmate.util.SessionManager
 import java.util.Calendar
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -24,6 +25,30 @@ fun CreateTravelScreen(
     onTravelCreated: () -> Unit
 ) {
     val viewModel: TravelViewModel = travelMateViewModel()
+    
+    // Check user role
+    val userRole = SessionManager.getUserRole()
+    val isOrganiser = userRole?.name == "ORGANISER"
+    
+    if (!isOrganiser) {
+        // Show permission denied dialog
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = androidx.compose.ui.Alignment.Center
+        ) {
+            AlertDialog(
+                onDismissRequest = onNavigateBack,
+                title = { Text("Accès refusé") },
+                text = { Text("Seul l'organisateur du voyage peut créer de nouveaux voyages.") },
+                confirmButton = {
+                    TextButton(onClick = onNavigateBack) {
+                        Text("Retour")
+                    }
+                }
+            )
+        }
+        return
+    }
     
     var title by remember { mutableStateOf("") }
     var destination by remember { mutableStateOf("") }

@@ -41,9 +41,27 @@ fun TravelMateApp() {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
     
-    // Check if user is logged in
-    val startDestination = remember {
-        if (SessionManager.isLoggedIn()) Screen.Home.route else Screen.Login.route
+    // Check if user is logged in - verify both flag and userId
+    val isLoggedIn = SessionManager.isLoggedIn() && SessionManager.getCurrentUserId() != null
+    val startDestination = if (isLoggedIn) Screen.Home.route else Screen.Login.route
+    
+    // Navigate to login if not authenticated when on protected routes
+    LaunchedEffect(currentRoute, isLoggedIn) {
+        val protectedRoutes = listOf(
+            Screen.Home.route,
+            Screen.Travels.route,
+            Screen.Activities.route,
+            Screen.Budget.route,
+            Screen.Messaging.route,
+            Screen.Notifications.route,
+            Screen.Profile.route
+        )
+        
+        if (!isLoggedIn && currentRoute in protectedRoutes) {
+            navController.navigate(Screen.Login.route) {
+                popUpTo(0) { inclusive = true }
+            }
+        }
     }
     
     // List of routes that should show bottom navigation
@@ -57,7 +75,7 @@ fun TravelMateApp() {
         Screen.Profile.route
     )
     
-    val showBottomNav = currentRoute in bottomNavRoutes
+    val showBottomNav = currentRoute in bottomNavRoutes && isLoggedIn
     
     Scaffold(
         bottomBar = {

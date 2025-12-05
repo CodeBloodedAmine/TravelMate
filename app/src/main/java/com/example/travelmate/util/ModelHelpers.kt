@@ -29,11 +29,11 @@ object ModelHelpers {
             startDate = startDate,
             endDate = endDate,
             organiserId = organiserId,
-            participantIdsJson = gson.toJson(participantIds),
+            participantIds = participantIds,
             budget = budget,
             spentAmount = spentAmount,
             imageUrl = imageUrl,
-            itineraryJson = gson.toJson(itinerary),
+            itinerary = itinerary,
             createdAt = createdAt
         )
     }
@@ -60,7 +60,7 @@ object ModelHelpers {
             date = date,
             time = time,
             location = location,
-            assignedParticipantIdsJson = gson.toJson(assignedParticipantIds),
+            assignedParticipantIds = assignedParticipantIds,
             cost = cost,
             category = category,
             imageUrl = imageUrl,
@@ -87,7 +87,7 @@ object ModelHelpers {
             amount = amount,
             category = category,
             paidByUserId = paidByUserId,
-            sharedWithUserIdsJson = gson.toJson(sharedWithUserIds),
+            sharedWithUserIds = sharedWithUserIds,
             date = date,
             description = description,
             imageUrl = imageUrl

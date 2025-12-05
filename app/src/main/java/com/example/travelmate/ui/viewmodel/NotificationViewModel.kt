@@ -3,14 +3,14 @@ package com.example.travelmate.ui.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.travelmate.data.models.Notification
-import com.example.travelmate.data.repository.NotificationRepository
+import com.example.travelmate.data.repository.NotificationRepositoryHybrid
 import com.example.travelmate.util.SessionManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-class NotificationViewModel(private val notificationRepository: NotificationRepository) : ViewModel() {
+class NotificationViewModel(private val notificationRepository: NotificationRepositoryHybrid) : ViewModel() {
     private val _notifications = MutableStateFlow<List<Notification>>(emptyList())
     val notifications: StateFlow<List<Notification>> = _notifications.asStateFlow()
     
@@ -47,7 +47,8 @@ class NotificationViewModel(private val notificationRepository: NotificationRepo
     fun markAsRead(notificationId: String) {
         viewModelScope.launch {
             try {
-                notificationRepository.markAsRead(notificationId)
+                val userId = SessionManager.getCurrentUserId() ?: return@launch
+                notificationRepository.markAsRead(userId, notificationId)
                 loadNotifications()
             } catch (e: Exception) {
                 // Handle error

@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "790713747536",
+    "firebase_url": "https://travelmate-7db8a-default-rtdb.europe-west1.firebasedatabase.app",
+    "project_id": "travelmate-7db8a",
+    "storage_bucket": "travelmate-7db8a.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:790713747536:android:97ee704603b4bf15492955",
+        "android_client_info": {
+          "package_name": "com.example.travelmate"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA2J3y7vvirO83P4XAyn40TSun3DafQltY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
