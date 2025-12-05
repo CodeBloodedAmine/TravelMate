@@ -8,14 +8,11 @@ TravelMate is a group travel planner app for Android and iOS. It helps you organ
 - **Budget Tracking:** Track group and individual budgets and expenses for each trip.
 - **Secure Authentication:** Role-based access for organizers and participants.
 - **In-App Chat:** Chat between members plus an AI chatbot for recommendations and quick help.
-- **Push Notifications:** Get notified about upcoming activities, changes, and important updates.
 
 ## Tech Stack
 - **Platform:** Native Android
 - **Language:** Kotlin
 - **Architecture:** MVVM, ViewModel + LiveData/Flow, Repository pattern
-- **Networking:** Retrofit/OkHttp + Kotlin Coroutines
-- **Dependency Injection:** Hilt/Koin (optional but recommended)
 - **Backend:** External REST API for auth, trips, activities, budgets, and chat
 
 ## Installation
