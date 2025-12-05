@@ -8,7 +8,7 @@ import com.google.ai.client.generativeai.type.content
 object AIService {
     // Initialize the Generative Model with Gemini API
     // Get your API key from: https://aistudio.google.com/app/apikey
-    private const val GEMINI_API_KEY = "AIzaSyA2J3y7vvirO83P4XAyn40TSun3DafQltY"  // Replace with your actual API key
+    private const val GEMINI_API_KEY = "AIzaSyBG3hNKsGFESCTByeDarVr9QQkvwi33TmI"  // Replace with your actual API key
     
     private val model by lazy {
         GenerativeModel(
@@ -20,7 +20,7 @@ object AIService {
                 topP = 0.95f
                 maxOutputTokens = 1024
             },
-            systemInstruction = """You are a helpful travel assistant for the TravelMate app. 
+            systemInstruction = """You are a helpful travel assistant for the TravelMate app.
                 |You provide advice about:
                 |- Trip planning and itineraries
                 |- Travel destinations and attractions
