@@ -33,5 +33,5 @@ TravelMate is a group travel planner app for Android and iOS. It helps you organ
 6. (upcoming) better security handling with organiser accounts
 7. (upcoming) better user interface and experience 
 
-## License
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+## Dedications
+Thanks to our android professor for this great idea and we'll continue adding to this project 
