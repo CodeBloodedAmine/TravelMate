@@ -92,19 +92,19 @@ fun NavGraph(
         
         composable(Screen.Activities.route) {
             ActivitiesScreen(
-                onNavigateToActivityDetail = { activityId ->
-                    navController.navigate(Screen.ActivityDetail.createRoute(activityId))
+                onNavigateToActivityDetail = { travelId ->
+                    navController.navigate(Screen.ActivityDetail.createRoute(travelId))
                 }
             )
         }
         
         composable(
             route = Screen.ActivityDetail.route,
-            arguments = listOf(navArgument("activityId") { type = NavType.StringType })
+            arguments = listOf(navArgument("travelId") { type = NavType.StringType })
         ) { backStackEntry ->
-            val activityId = backStackEntry.arguments?.getString("activityId") ?: ""
+            val travelId = backStackEntry.arguments?.getString("travelId") ?: ""
             ActivityDetailScreen(
-                activityId = activityId,
+                travelId = travelId,
                 onNavigateBack = { navController.popBackStack() }
             )
         }

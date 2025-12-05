@@ -9,6 +9,7 @@ import com.example.travelmate.util.ModelHelpers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 import java.util.UUID
 
@@ -26,15 +27,14 @@ class TravelViewModel(private val travelRepository: TravelRepositoryHybrid) : Vi
     fun loadTravels() {
         viewModelScope.launch {
             _isLoading.value = true
-            try {
-                // Load ALL travels available
-                travelRepository.getAllTravels().collect { travelsList ->
+            travelRepository.getAllTravels()
+                .catch { e ->
+                    _isLoading.value = false
+                }
+                .collect { travelsList ->
                     _travels.value = travelsList
                     _isLoading.value = false
                 }
-            } catch (e: Exception) {
-                _isLoading.value = false
-            }
         }
     }
     
@@ -75,13 +75,10 @@ class TravelViewModel(private val travelRepository: TravelRepositoryHybrid) : Vi
                 )
                 
                 travelRepository.insertTravel(travel)
-                
-                // Create notifications for all users about this new travel
                 travelRepository.notifyAllUsersOfNewTravel(travel)
-                
                 loadTravels()
             } catch (e: Exception) {
-                // Handle error
+                // Handle error silently
             }
         }
     }
@@ -95,9 +92,9 @@ class TravelViewModel(private val travelRepository: TravelRepositoryHybrid) : Vi
             try {
                 val userId = SessionManager.getCurrentUserId() ?: return@launch
                 travelRepository.participateInTravel(travelId, userId)
-                loadTravels() // Reload to show updated travels
+                loadTravels()
             } catch (e: Exception) {
-                // Handle error
+                // Handle error silently
             }
         }
     }

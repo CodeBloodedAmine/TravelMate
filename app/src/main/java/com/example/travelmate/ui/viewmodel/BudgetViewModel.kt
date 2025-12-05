@@ -27,6 +27,9 @@ class BudgetViewModel(
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
     
+    private val _error = MutableStateFlow<String?>(null)
+    val error: StateFlow<String?> = _error.asStateFlow()
+    
     fun loadBudgetItems(travelId: String) {
         viewModelScope.launch {
             _isLoading.value = true
@@ -35,9 +38,11 @@ class BudgetViewModel(
                     _budgetItems.value = items
                     calculateSummary(travelId)
                     _isLoading.value = false
+                    _error.value = null
                 }
             } catch (e: Exception) {
                 _isLoading.value = false
+                _error.value = e.message
             }
         }
     }
@@ -61,7 +66,7 @@ class BudgetViewModel(
                 )
             }
         } catch (e: Exception) {
-            // Handle error
+            // Handle error silently
         }
     }
     
@@ -88,15 +93,20 @@ class BudgetViewModel(
                 )
                 
                 budgetRepository.insertBudgetItem(budgetItem)
+                _error.value = null
                 loadBudgetItems(travelId)
             } catch (e: Exception) {
-                // Handle error
+                _error.value = e.message
             }
         }
     }
     
     fun refresh(travelId: String) {
         loadBudgetItems(travelId)
+    }
+    
+    fun clearError() {
+        _error.value = null
     }
 }
 

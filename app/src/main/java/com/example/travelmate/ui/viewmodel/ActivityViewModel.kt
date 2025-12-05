@@ -19,6 +19,9 @@ class ActivityViewModel(private val activityRepository: ActivityRepositoryHybrid
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
     
+    private val _error = MutableStateFlow<String?>(null)
+    val error: StateFlow<String?> = _error.asStateFlow()
+    
     fun loadActivitiesByTravel(travelId: String) {
         viewModelScope.launch {
             _isLoading.value = true
@@ -26,9 +29,11 @@ class ActivityViewModel(private val activityRepository: ActivityRepositoryHybrid
                 activityRepository.getActivitiesByTravel(travelId).collect { activitiesList ->
                     _activities.value = activitiesList
                     _isLoading.value = false
+                    _error.value = null
                 }
             } catch (e: Exception) {
                 _isLoading.value = false
+                _error.value = e.message
             }
         }
     }
@@ -70,15 +75,20 @@ class ActivityViewModel(private val activityRepository: ActivityRepositoryHybrid
                 )
                 
                 activityRepository.insertActivity(activity)
+                _error.value = null
                 loadActivitiesByTravel(travelId)
             } catch (e: Exception) {
-                // Handle error
+                _error.value = e.message
             }
         }
     }
     
     fun refresh(travelId: String) {
         loadActivitiesByTravel(travelId)
+    }
+    
+    fun clearError() {
+        _error.value = null
     }
 }
 

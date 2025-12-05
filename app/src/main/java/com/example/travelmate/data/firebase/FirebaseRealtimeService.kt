@@ -1,6 +1,5 @@
 package com.example.travelmate.data.firebase
 
-import android.util.Log
 import com.example.travelmate.data.models.*
 import com.google.firebase.database.*
 import kotlinx.coroutines.channels.awaitClose
@@ -18,7 +17,61 @@ class FirebaseRealtimeService {
             .equalTo(userId)
             .addValueEventListener(object : ValueEventListener {
                 override fun onDataChange(snapshot: DataSnapshot) {
-                    val travels = snapshot.children.mapNotNull { it.getValue(Travel::class.java) }
+                    val travels = snapshot.children.mapNotNull { travelSnapshot ->
+                        try {
+                            val travelMap = travelSnapshot.value as? Map<*, *> ?: return@mapNotNull null
+                            
+                            val participantIdsList = when (val participants = travelMap["participantIds"]) {
+                                is Map<*, *> -> participants.keys.mapNotNull { it.toString() }
+                                is List<*> -> participants.mapNotNull { it.toString() }
+                                else -> emptyList<String>()
+                            }
+                            
+                            val itineraryList = when (val itinerary = travelMap["itinerary"]) {
+                                is Map<*, *> -> itinerary.values.mapNotNull { item ->
+                                    val itemMap = item as? Map<*, *> ?: return@mapNotNull null
+                                    ItineraryItem(
+                                        id = itemMap["id"]?.toString() ?: "",
+                                        date = (itemMap["date"] as? Number)?.toLong() ?: 0L,
+                                        time = itemMap["time"]?.toString(),
+                                        title = itemMap["title"]?.toString() ?: "",
+                                        description = itemMap["description"]?.toString(),
+                                        location = itemMap["location"]?.toString()
+                                    )
+                                }
+                                is List<*> -> itinerary.mapNotNull { item ->
+                                    val itemMap = item as? Map<*, *> ?: return@mapNotNull null
+                                    ItineraryItem(
+                                        id = itemMap["id"]?.toString() ?: "",
+                                        date = (itemMap["date"] as? Number)?.toLong() ?: 0L,
+                                        time = itemMap["time"]?.toString(),
+                                        title = itemMap["title"]?.toString() ?: "",
+                                        description = itemMap["description"]?.toString(),
+                                        location = itemMap["location"]?.toString()
+                                    )
+                                }
+                                else -> emptyList<ItineraryItem>()
+                            }
+                            
+                            Travel(
+                                id = travelMap["id"]?.toString() ?: travelSnapshot.key ?: "",
+                                title = travelMap["title"]?.toString() ?: "",
+                                description = travelMap["description"]?.toString(),
+                                destination = travelMap["destination"]?.toString() ?: "",
+                                startDate = (travelMap["startDate"] as? Number)?.toLong() ?: 0L,
+                                endDate = (travelMap["endDate"] as? Number)?.toLong() ?: 0L,
+                                organiserId = travelMap["organiserId"]?.toString() ?: "",
+                                participantIds = participantIdsList,
+                                budget = (travelMap["budget"] as? Number)?.toDouble() ?: 0.0,
+                                spentAmount = (travelMap["spentAmount"] as? Number)?.toDouble() ?: 0.0,
+                                imageUrl = travelMap["imageUrl"]?.toString(),
+                                itinerary = itineraryList,
+                                createdAt = (travelMap["createdAt"] as? Number)?.toLong() ?: System.currentTimeMillis()
+                            )
+                        } catch (e: Exception) {
+                            null
+                        }
+                    }
                     trySend(travels)
                 }
                 
@@ -34,25 +87,81 @@ class FirebaseRealtimeService {
         val listener = database.child("travels")
             .addValueEventListener(object : ValueEventListener {
                 override fun onDataChange(snapshot: DataSnapshot) {
-                    val travels = snapshot.children.mapNotNull { it.getValue(Travel::class.java) }
-                    Log.d("FirebaseRealtimeService", "Loaded ${travels.size} travels from Firebase")
+                    val travels = snapshot.children.mapNotNull { travelSnapshot ->
+                        try {
+                            val travelMap = travelSnapshot.value as? Map<*, *> ?: return@mapNotNull null
+                            
+                            // Extract participantIds - Firebase stores lists as Map<String, Boolean> or List
+                            val participantIdsList = when (val participants = travelMap["participantIds"]) {
+                                is Map<*, *> -> participants.keys.mapNotNull { it.toString() }
+                                is List<*> -> participants.mapNotNull { it.toString() }
+                                else -> emptyList<String>()
+                            }
+                            
+                            // Extract itinerary - Firebase stores as Map or List
+                            val itineraryList = when (val itinerary = travelMap["itinerary"]) {
+                                is Map<*, *> -> itinerary.values.mapNotNull { item ->
+                                    val itemMap = item as? Map<*, *> ?: return@mapNotNull null
+                                    ItineraryItem(
+                                        id = itemMap["id"]?.toString() ?: "",
+                                        date = (itemMap["date"] as? Number)?.toLong() ?: 0L,
+                                        time = itemMap["time"]?.toString(),
+                                        title = itemMap["title"]?.toString() ?: "",
+                                        description = itemMap["description"]?.toString(),
+                                        location = itemMap["location"]?.toString()
+                                    )
+                                }
+                                is List<*> -> itinerary.mapNotNull { item ->
+                                    val itemMap = item as? Map<*, *> ?: return@mapNotNull null
+                                    ItineraryItem(
+                                        id = itemMap["id"]?.toString() ?: "",
+                                        date = (itemMap["date"] as? Number)?.toLong() ?: 0L,
+                                        time = itemMap["time"]?.toString(),
+                                        title = itemMap["title"]?.toString() ?: "",
+                                        description = itemMap["description"]?.toString(),
+                                        location = itemMap["location"]?.toString()
+                                    )
+                                }
+                                else -> emptyList<ItineraryItem>()
+                            }
+                            
+                            Travel(
+                                id = travelMap["id"]?.toString() ?: travelSnapshot.key ?: "",
+                                title = travelMap["title"]?.toString() ?: "",
+                                description = travelMap["description"]?.toString(),
+                                destination = travelMap["destination"]?.toString() ?: "",
+                                startDate = (travelMap["startDate"] as? Number)?.toLong() ?: 0L,
+                                endDate = (travelMap["endDate"] as? Number)?.toLong() ?: 0L,
+                                organiserId = travelMap["organiserId"]?.toString() ?: "",
+                                participantIds = participantIdsList,
+                                budget = (travelMap["budget"] as? Number)?.toDouble() ?: 0.0,
+                                spentAmount = (travelMap["spentAmount"] as? Number)?.toDouble() ?: 0.0,
+                                imageUrl = travelMap["imageUrl"]?.toString(),
+                                itinerary = itineraryList,
+                                createdAt = (travelMap["createdAt"] as? Number)?.toLong() ?: System.currentTimeMillis()
+                            )
+                        } catch (e: Exception) {
+                            null
+                        }
+                    }
                     trySend(travels)
                 }
                 
                 override fun onCancelled(error: DatabaseError) {
-                    Log.e("FirebaseRealtimeService", "Error observing travels: ${error.message}")
                     close(error.toException())
                 }
             })
         
-        awaitClose { database.child("travels").removeEventListener(listener) }
+        awaitClose { 
+            database.child("travels").removeEventListener(listener) 
+        }
     }
     
     fun observeTravel(travelId: String): Flow<Travel?> = callbackFlow {
         val listener = database.child("travels").child(travelId)
             .addValueEventListener(object : ValueEventListener {
                 override fun onDataChange(snapshot: DataSnapshot) {
-                    val travel = snapshot.getValue(Travel::class.java)
+                    val travel = parseTravelFromSnapshot(snapshot)
                     trySend(travel)
                 }
                 
@@ -67,16 +176,96 @@ class FirebaseRealtimeService {
     suspend fun getTravelById(travelId: String): Travel? {
         return try {
             val snapshot = database.child("travels").child(travelId).get().await()
-            snapshot.getValue(Travel::class.java)
+            parseTravelFromSnapshot(snapshot)
         } catch (e: Exception) {
-            Log.e("FirebaseRealtimeService", "Error getting travel: ${e.message}")
+            null
+        }
+    }
+    
+    private fun parseTravelFromSnapshot(snapshot: DataSnapshot): Travel? {
+        return try {
+            val travelMap = snapshot.value as? Map<*, *> ?: return null
+            
+            val participantIdsList = when (val participants = travelMap["participantIds"]) {
+                is Map<*, *> -> participants.keys.mapNotNull { it.toString() }
+                is List<*> -> participants.mapNotNull { it.toString() }
+                else -> emptyList<String>()
+            }
+            
+            val itineraryList = when (val itinerary = travelMap["itinerary"]) {
+                is Map<*, *> -> itinerary.values.mapNotNull { item ->
+                    val itemMap = item as? Map<*, *> ?: return@mapNotNull null
+                    ItineraryItem(
+                        id = itemMap["id"]?.toString() ?: "",
+                        date = (itemMap["date"] as? Number)?.toLong() ?: 0L,
+                        time = itemMap["time"]?.toString(),
+                        title = itemMap["title"]?.toString() ?: "",
+                        description = itemMap["description"]?.toString(),
+                        location = itemMap["location"]?.toString()
+                    )
+                }
+                is List<*> -> itinerary.mapNotNull { item ->
+                    val itemMap = item as? Map<*, *> ?: return@mapNotNull null
+                    ItineraryItem(
+                        id = itemMap["id"]?.toString() ?: "",
+                        date = (itemMap["date"] as? Number)?.toLong() ?: 0L,
+                        time = itemMap["time"]?.toString(),
+                        title = itemMap["title"]?.toString() ?: "",
+                        description = itemMap["description"]?.toString(),
+                        location = itemMap["location"]?.toString()
+                    )
+                }
+                else -> emptyList<ItineraryItem>()
+            }
+            
+            Travel(
+                id = travelMap["id"]?.toString() ?: snapshot.key ?: "",
+                title = travelMap["title"]?.toString() ?: "",
+                description = travelMap["description"]?.toString(),
+                destination = travelMap["destination"]?.toString() ?: "",
+                startDate = (travelMap["startDate"] as? Number)?.toLong() ?: 0L,
+                endDate = (travelMap["endDate"] as? Number)?.toLong() ?: 0L,
+                organiserId = travelMap["organiserId"]?.toString() ?: "",
+                participantIds = participantIdsList,
+                budget = (travelMap["budget"] as? Number)?.toDouble() ?: 0.0,
+                spentAmount = (travelMap["spentAmount"] as? Number)?.toDouble() ?: 0.0,
+                imageUrl = travelMap["imageUrl"]?.toString(),
+                itinerary = itineraryList,
+                createdAt = (travelMap["createdAt"] as? Number)?.toLong() ?: System.currentTimeMillis()
+            )
+        } catch (e: Exception) {
             null
         }
     }
     
     suspend fun saveTravel(travel: Travel): Result<Unit> {
         return try {
-            database.child("travels").child(travel.id).setValue(travel).await()
+            // Convert Travel to Map for Firebase (handles lists properly)
+            val travelMap = mapOf(
+                "id" to travel.id,
+                "title" to travel.title,
+                "description" to (travel.description ?: ""),
+                "destination" to travel.destination,
+                "startDate" to travel.startDate,
+                "endDate" to travel.endDate,
+                "organiserId" to travel.organiserId,
+                "participantIds" to travel.participantIds, // Firebase handles List<String> as array
+                "budget" to travel.budget,
+                "spentAmount" to travel.spentAmount,
+                "imageUrl" to (travel.imageUrl ?: ""),
+                "itinerary" to travel.itinerary.map { item ->
+                    mapOf(
+                        "id" to item.id,
+                        "date" to item.date,
+                        "time" to (item.time ?: ""),
+                        "title" to item.title,
+                        "description" to (item.description ?: ""),
+                        "location" to (item.location ?: "")
+                    )
+                },
+                "createdAt" to travel.createdAt
+            )
+            database.child("travels").child(travel.id).setValue(travelMap).await()
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
@@ -183,24 +372,15 @@ class FirebaseRealtimeService {
 }
 
     fun saveMessage(message: Message, onResult: (Result<Unit>) -> Unit) {
-        // ✅ CORRECT PATH: travels/{travelId}/messages/{messageId}
-        val path = "travels/${message.travelId}/messages/${message.id}"
-        Log.d("FirebaseRealtimeService", "🚀 Saving message to: $path")
-        Log.d("FirebaseRealtimeService", "Message data: id=${message.id}, travelId=${message.travelId}, content=${message.content}")
-        
         database.child("travels")
             .child(message.travelId)
             .child("messages")
             .child(message.id)
             .setValue(message)
             .addOnSuccessListener {
-                Log.d("FirebaseRealtimeService", "✅ Message saved successfully to: $path")
                 onResult(Result.success(Unit))
             }
             .addOnFailureListener { exception ->
-                Log.e("FirebaseRealtimeService", "❌ Failed to save message to: $path")
-                Log.e("FirebaseRealtimeService", "Error: ${exception.message}")
-                exception.printStackTrace()
                 onResult(Result.failure(exception))
             }
     }
@@ -255,45 +435,36 @@ class FirebaseRealtimeService {
     
     suspend fun createNotificationForAllUsers(travel: Travel) {
         try {
-            Log.d("FirebaseRealtimeService", "Creating notifications for new travel: ${travel.title}")
+            val snapshot = database.child("users").get().await()
             
-            // Get all users
-            database.child("users").get().addOnSuccessListener { snapshot ->
-                snapshot.children.forEach { userSnapshot ->
-                    val userId = userSnapshot.key ?: return@forEach
-                    
-                    // Don't notify the organizer (they already know)
-                    if (userId == travel.organiserId) return@forEach
-                    
-                    // Create notification for this user
-                    val notificationId = java.util.UUID.randomUUID().toString()
-                    val notification = Notification(
-                        id = notificationId,
-                        userId = userId,
-                        title = "Nouveau voyage disponible!",
-                        message = "${travel.title} à ${travel.destination} - Rejoignez le voyage!",
-                        type = NotificationType.TRAVEL_INVITATION,
-                        relatedTravelId = travel.id,
-                        timestamp = System.currentTimeMillis(),
-                        isRead = false
-                    )
-                    
-                    // Save to Firebase: /notifications/{userId}/{notificationId}
-                    database.child("notifications").child(userId).child(notificationId)
-                        .setValue(notification)
-                        .addOnSuccessListener {
-                            Log.d("FirebaseRealtimeService", "✅ Notification created for user $userId")
-                        }
-                        .addOnFailureListener { e ->
-                            Log.e("FirebaseRealtimeService", "❌ Failed to create notification: ${e.message}")
-                        }
+            snapshot.children.forEach { userSnapshot ->
+                val userId = userSnapshot.key ?: return@forEach
+                
+                if (userId == travel.organiserId) {
+                    return@forEach
                 }
-            }.addOnFailureListener { e ->
-                Log.e("FirebaseRealtimeService", "Error getting users: ${e.message}")
+                
+                val notificationId = java.util.UUID.randomUUID().toString()
+                val notification = Notification(
+                    id = notificationId,
+                    userId = userId,
+                    title = "Nouveau voyage disponible!",
+                    message = "${travel.title} à ${travel.destination} - Rejoignez le voyage!",
+                    type = NotificationType.TRAVEL_INVITATION,
+                    relatedTravelId = travel.id,
+                    timestamp = System.currentTimeMillis(),
+                    isRead = false
+                )
+                
+                try {
+                    database.child("notifications").child(userId).child(notificationId)
+                        .setValue(notification).await()
+                } catch (e: Exception) {
+                    // Handle error silently
+                }
             }
         } catch (e: Exception) {
-            Log.e("FirebaseRealtimeService", "Error creating notifications: ${e.message}")
-            e.printStackTrace()
+            // Handle error silently
         }
     }
     
@@ -303,12 +474,10 @@ class FirebaseRealtimeService {
             .addValueEventListener(object : ValueEventListener {
                 override fun onDataChange(snapshot: DataSnapshot) {
                     val notifications = snapshot.children.mapNotNull { it.getValue(Notification::class.java) }
-                    Log.d("FirebaseRealtimeService", "📬 Loaded ${notifications.size} notifications for user $userId")
                     trySend(notifications.sortedByDescending { it.timestamp })
                 }
                 
                 override fun onCancelled(error: DatabaseError) {
-                    Log.e("FirebaseRealtimeService", "❌ Error loading notifications: ${error.message}")
                     close(error.toException())
                 }
             })

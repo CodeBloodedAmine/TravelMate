@@ -33,10 +33,12 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewModelScope
 import com.example.travelmate.ui.composables.travelMateViewModel
 import com.example.travelmate.ui.viewmodel.AuthViewModel
 import com.example.travelmate.ui.theme.Orange40
 import com.example.travelmate.ui.theme.Turquoise40
+import kotlinx.coroutines.launch
 
 @Composable
 fun LoginScreen(
@@ -311,6 +313,7 @@ fun LoginScreen(
                     }
                 } // Closes the Column inside the Card
             } // Closes the Card
+
         } // Closes the main Column
     } // Closes the root Box
 } // Closes the LoginScreen composable function

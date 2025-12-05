@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.travelmate.ui.theme.Orange40
 import com.example.travelmate.ui.theme.Turquoise40
+import com.example.travelmate.data.ai.AIService
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.math.sin
@@ -74,74 +75,6 @@ fun ChatBotScreen(
         }
     }
 
-    fun generateBotResponse(userMessage: String): String {
-        val lowerMessage = userMessage.lowercase()
-
-        return when {
-            lowerMessage.contains("budget") || lowerMessage.contains("coût") || lowerMessage.contains("prix") -> {
-                "**Gestion de budget** 💰\n\nPour gérer votre budget efficacement :\n\n" +
-                        "📊 **Conseils :**\n" +
-                        "• Définissez un budget total réaliste\n" +
-                        "• Catégorisez vos dépenses (hébergement 40%, transport 30%, activités 20%, imprévus 10%)\n" +
-                        "• Utilisez l'onglet Budget pour un suivi en temps réel\n" +
-                        "• Partagez équitablement entre participants\n\n" +
-                        "💡 **Astuce :** Réservez 10-15% de votre budget pour les imprévus !"
-            }
-            lowerMessage.contains("activité") || lowerMessage.contains("que faire") || lowerMessage.contains("visiter") -> {
-                "**Activités & Visites** 🗺️\n\nVoici des suggestions par catégorie :\n\n" +
-                        "🏛️ **Culture :** Musées, monuments historiques, visites guidées\n" +
-                        "🌳 **Nature :** Randonnées, parcs naturels, plages\n" +
-                        "🎭 **Divertissement :** Spectacles, concerts, événements locaux\n" +
-                        "🍽️ **Gastronomie :** Restaurants typiques, cours de cuisine, marchés\n" +
-                        "🛍️ **Shopping :** Boutiques artisanales, centres commerciaux\n\n" +
-                        "✨ Créez vos activités dans l'onglet Activités pour les partager avec votre groupe !"
-            }
-            lowerMessage.contains("voyage") || lowerMessage.contains("planifier") || lowerMessage.contains("organiser") -> {
-                "**Organisation de voyage** ✈️\n\nVoici un plan étape par étape :\n\n" +
-                        "1. **Destination & Dates** 🗓️ - Choisissez où et quand partir\n" +
-                        "2. **Participants** 👥 - Invitez vos amis/famille\n" +
-                        "3. **Budget** 💰 - Fixez et suivez vos dépenses\n" +
-                        "4. **Activités** 🎯 - Planifiez votre itinéraire\n" +
-                        "5. **Communication** 💬 - Échangez via la messagerie\n" +
-                        "6. **Documents** 📋 - Vérifiez passeports, visas, assurances\n\n" +
-                        "Je peux vous aider avec une étape spécifique !"
-            }
-            lowerMessage.contains("bonjour") || lowerMessage.contains("salut") || lowerMessage.contains("hello") -> {
-                "Bonjour ! 👋 Je suis là pour vous aider à planifier votre voyage parfait.\n\n" +
-                        "Je peux vous assister sur :\n" +
-                        "• Budget et finances 💰\n" +
-                        "• Activités et visites 🗺️\n" +
-                        "• Organisation générale ✈️\n" +
-                        "• Astuces voyage 🧳\n\n" +
-                        "Que souhaitez-vous savoir ?"
-            }
-            lowerMessage.contains("merci") || lowerMessage.contains("thanks") -> {
-                "Avec plaisir ! 🎉\n\n" +
-                        "N'hésitez pas si vous avez d'autres questions. Je suis là pour vous aider à rendre votre voyage inoubliable !\n\n" +
-                        "Bon voyage et à bientôt ! 🌍✈️"
-            }
-            lowerMessage.contains("météo") || lowerMessage.contains("temps") -> {
-                "**Météo & Climat** ☀️🌧️\n\n" +
-                        "Pour bien préparer vos bagages :\n" +
-                        "• Consultez les prévisions 10 jours avant le départ\n" +
-                        "• Adaptez vos vêtements au climat\n" +
-                        "• Prévoyez un équipement pour les imprévus (parapluie, veste légère)\n" +
-                        "• Vérifiez les saisons touristiques\n\n" +
-                        "💡 **Astuce :** Les applications météo locales sont souvent plus précises !"
-            }
-            else -> {
-                "Je comprends votre question ! 🤔\n\n" +
-                        "Voici quelques pistes où je peux vous aider :\n\n" +
-                        "🔹 **Créer un voyage** - Utilisez l'onglet Voyages\n" +
-                        "🔹 **Gérer le budget** - Suivez vos dépenses en temps réel\n" +
-                        "🔹 **Planifier des activités** - Organisez votre emploi du temps\n" +
-                        "🔹 **Communiquer** - Échangez avec votre groupe\n" +
-                        "🔹 **Notifications** - Restez informé des mises à jour\n\n" +
-                        "Avez-vous une question spécifique sur l'une de ces fonctionnalités ?"
-            }
-        }
-    }
-
     val quickReplies = listOf(
         "💰 Gestion de budget",
         "🗺️ Idées d'activités",
@@ -164,16 +97,27 @@ fun ChatBotScreen(
             isLoading = true
 
             scope.launch {
-                delay(800) // Simulate AI thinking
-                val botResponse = generateBotResponse(currentMessage)
-                messages.add(
-                    ChatMessage(
-                        id = (System.currentTimeMillis() + 1).toString(),
-                        content = botResponse,
-                        isFromBot = true
+                try {
+                    // Call the real Gemini API
+                    val botResponse = AIService.sendMessage(currentMessage)
+                    messages.add(
+                        ChatMessage(
+                            id = (System.currentTimeMillis() + 1).toString(),
+                            content = botResponse,
+                            isFromBot = true
+                        )
                     )
-                )
-                isLoading = false
+                } catch (e: Exception) {
+                    messages.add(
+                        ChatMessage(
+                            id = (System.currentTimeMillis() + 1).toString(),
+                            content = "Sorry, I encountered an error: ${e.message}",
+                            isFromBot = true
+                        )
+                    )
+                } finally {
+                    isLoading = false
+                }
             }
         }
     }

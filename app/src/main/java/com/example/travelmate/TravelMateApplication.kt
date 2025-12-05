@@ -43,7 +43,6 @@ class TravelMateApplication : Application() {
             }
         } catch (e: Exception) {
             // Firebase not configured yet - app will work in local-only mode
-            android.util.Log.w("TravelMate", "Firebase not initialized: ${e.message}")
         }
     }
     

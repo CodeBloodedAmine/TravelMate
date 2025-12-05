@@ -24,7 +24,7 @@ class ViewModelFactory(
             modelClass.isAssignableFrom(HomeViewModel::class.java) -> {
                 HomeViewModel(travelRepository) as T
             }
-            modelClass.isAssignableFrom(TravelViewModel::class.java) -> {
+            modelClass.isAssignableFrom(TravelViewModel::class.java) -> {   
                 TravelViewModel(travelRepository) as T
             }
             modelClass.isAssignableFrom(ActivityViewModel::class.java) -> {

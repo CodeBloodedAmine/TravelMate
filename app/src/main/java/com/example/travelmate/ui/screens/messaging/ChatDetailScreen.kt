@@ -69,8 +69,7 @@ fun ChatDetailScreen(
     // Show error snackbar if there's an error
     if (uiState.error != null) {
         LaunchedEffect(uiState.error) {
-            // In a real app, you'd use a SnackbarHost here
-            println("Message Error: ${uiState.error}")
+            // Error is displayed in UI below
         }
     }
 

@@ -1,6 +1,5 @@
 package com.example.travelmate.data.repository
 
-import android.util.Log
 import com.example.travelmate.data.models.Message
 import com.example.travelmate.data.room.MessageDao
 import com.example.travelmate.data.firebase.FirebaseRealtimeService
@@ -8,7 +7,6 @@ import com.example.travelmate.util.NetworkMonitor
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.tasks.await
 
 class MessageRepositoryHybrid(
     private val messageDao: MessageDao,
@@ -16,65 +14,48 @@ class MessageRepositoryHybrid(
     private val networkMonitor: NetworkMonitor
 ) {
     
-    // ✅ Get messages for a travel (group chat)
     fun getMessagesByTravelId(travelId: String): Flow<List<Message>> {
         return if (networkMonitor.isNetworkAvailable()) {
-            // Fetch from Firebase at: travels/{travelId}/messages
             firebaseService.listenToMessagesByTravelId(travelId)
                 .onEach { messages ->
-                    // Save to local Room database for offline access
                     messages.forEach { messageDao.insertMessage(it) }
                 }
         } else {
-            // Use local Room database if offline
             messageDao.getMessagesByTravelId(travelId)
         }
     }
     
-    // ✅ Send a message
     fun sendMessage(message: Message): Flow<Result<Unit>> = flow {
         emit(Result.loading())
         
         try {
-            // 1. Save to local database first (for immediate UI update and offline)
             messageDao.insertMessage(message)
-            Log.d("MessageRepository", "Message saved to local database")
             
-            // 2. Sync with Firebase at: travels/{travelId}/messages/{messageId}
             if (networkMonitor.isNetworkAvailable()) {
-                Log.d("MessageRepository", "Attempting to save message to Firebase at: travels/${message.travelId}/messages/${message.id}")
                 firebaseService.saveMessage(message) { result ->
                     result.onSuccess {
-                        Log.d("MessageRepository", "✅ Message saved to Firebase")
+                        // Success
                     }.onFailure { exception ->
-                        Log.e("MessageRepository", "❌ Firebase sync failed: ${exception.message}")
-                        exception.printStackTrace()
+                        // Handle error silently
                     }
                 }
-                // Small delay to ensure Firebase callback completes
                 kotlinx.coroutines.delay(500)
-            } else {
-                Log.w("MessageRepository", "⚠️ No network - message saved locally only")
             }
             
             emit(Result.success(Unit))
         } catch (e: Exception) {
-            Log.e("MessageRepository", "❌ Error sending message: ${e.message}")
-            e.printStackTrace()
             emit(Result.failure(e))
         }
     }
     
-    // ✅ Mark a message as read
     suspend fun markAsRead(messageId: String) {
         try {
             messageDao.markAsRead(messageId)
         } catch (e: Exception) {
-            Log.e("MessageRepository", "Error marking message as read: ${e.message}")
+            // Handle error silently
         }
     }
     
-    // ✅ Insert a message (used for local saving)
     suspend fun insertMessage(message: Message) {
         messageDao.insertMessage(message)
     }

@@ -19,8 +19,8 @@ sealed class Screen(val route: String) {
         fun createRoute(travelId: String) = "travel_detail/$travelId"
     }
     
-    object ActivityDetail : Screen("activity_detail/{activityId}") {
-        fun createRoute(activityId: String) = "activity_detail/$activityId"
+    object ActivityDetail : Screen("activity_detail/{travelId}") {
+        fun createRoute(travelId: String) = "activity_detail/$travelId"
     }
     
     object CreateTravel : Screen("create_travel")

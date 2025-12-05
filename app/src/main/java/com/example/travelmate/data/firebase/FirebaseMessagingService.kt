@@ -83,8 +83,6 @@ class TravelMateMessagingService : FirebaseMessagingService() {
     
     private fun saveTokenToDatabase(token: String) {
         // This will be called from ViewModel or Repository
-        // For now, just log it
-        android.util.Log.d("FCM", "New token: $token")
     }
     
     companion object {

@@ -4,10 +4,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.travelmate.data.models.Travel
 import com.example.travelmate.data.repository.TravelRepositoryHybrid
-import com.example.travelmate.util.SessionManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 
 class HomeViewModel(private val travelRepository: TravelRepositoryHybrid) : ViewModel() {
@@ -24,21 +24,14 @@ class HomeViewModel(private val travelRepository: TravelRepositoryHybrid) : View
     fun loadTravels() {
         viewModelScope.launch {
             _isLoading.value = true
-            try {
-                val userId = SessionManager.getCurrentUserId()
-                if (userId != null) {
-                    travelRepository.getOrganisedTravels(userId).collect { travelsList ->
-                        _travels.value = travelsList
-                        _isLoading.value = false
-                    }
-                } else {
-                    _travels.value = emptyList()
+            travelRepository.getAllTravels()
+                .catch { e ->
                     _isLoading.value = false
                 }
-            } catch (e: Exception) {
-                _isLoading.value = false
-                // Handle error
-            }
+                .collect { travelsList ->
+                    _travels.value = travelsList
+                    _isLoading.value = false
+                }
         }
     }
     
