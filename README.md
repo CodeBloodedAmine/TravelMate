@@ -1,5 +1,5 @@
 
-# TravelMate 🌍✈️
+# TravelMate 🌍
 
 TravelMate is a group travel planner app for Android and iOS. It helps you organize shared trips, activities, budgets, notifications, and features AI-powered messaging for seamless group coordination.
 
