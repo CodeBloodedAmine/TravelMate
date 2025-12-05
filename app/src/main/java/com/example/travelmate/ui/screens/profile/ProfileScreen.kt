@@ -58,10 +58,16 @@ fun ProfileScreen(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(240.dp)
+                .height(260.dp)
                 .background(
                     brush = Brush.verticalGradient(
                         colors = listOf(Turquoise40, Turquoise40.copy(alpha = 0.8f))
+                    )
+                )
+                .clip(
+                    RoundedCornerShape(
+                        bottomStart = 32.dp,
+                        bottomEnd = 32.dp
                     )
                 )
         ) {
@@ -70,7 +76,7 @@ fun ProfileScreen(
                 onClick = { showLogoutDialog = true },
                 modifier = Modifier
                     .align(Alignment.TopEnd)
-                    .padding(8.dp)
+                    .padding(16.dp)
             ) {
                 Icon(
                     imageVector = Icons.Default.Logout,
@@ -142,11 +148,12 @@ fun ProfileScreen(
         Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 16.dp),
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White)
+                .padding(horizontal = 20.dp, vertical = 20.dp),
+            shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White),
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
         ) {
-            Column {
+            Column(modifier = Modifier.padding(4.dp)) {
                 // Rôle
                 Row(
                     modifier = Modifier

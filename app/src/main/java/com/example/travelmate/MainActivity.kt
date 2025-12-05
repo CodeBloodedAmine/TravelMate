@@ -101,9 +101,11 @@ fun TravelMateApp() {
             }
         }
     ) { paddingValues ->
-        NavGraph(
-            navController = navController,
-            startDestination = startDestination
-        )
+        Box(modifier = Modifier.padding(paddingValues)) {
+            NavGraph(
+                navController = navController,
+                startDestination = startDestination
+            )
+        }
     }
 }
