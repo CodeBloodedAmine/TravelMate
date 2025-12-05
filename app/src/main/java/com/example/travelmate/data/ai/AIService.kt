@@ -2,8 +2,9 @@ package com.example.travelmate.data.ai
 
 import android.util.Log
 import com.google.ai.client.generativeai.GenerativeModel
-import com.google.ai.client.generativeai.type.generationConfig
 import com.google.ai.client.generativeai.type.content
+import com.google.ai.client.generativeai.type.generationConfig
+import com.google.ai.client.generativeai.type.text
 
 object AIService {
     // Initialize the Generative Model with Gemini API
@@ -43,9 +44,7 @@ object AIService {
             Log.d("AIService", "🤖 Sending message to Gemini: $message")
             
             val response = model.generateContent(
-                content {
-                    text(message)
-                }
+                content { text(message) }
             )
             val aiResponse = response.text ?: "No response from AI"
             
