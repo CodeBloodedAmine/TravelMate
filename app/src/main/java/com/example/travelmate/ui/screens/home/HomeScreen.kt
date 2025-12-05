@@ -212,13 +212,13 @@ fun HomeScreen(
             }
         }
 
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // Content
+        // Content with scrolling
         Column(
             modifier = Modifier
-                .fillMaxWidth()
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
                 .padding(horizontal = 24.dp)
+                .padding(top = 24.dp)
         ) {
             // Header section
             Row(
@@ -707,6 +707,5 @@ fun EmptyTravelState(onCreateTravel: () -> Unit) {
                 Text("Créer un voyage", fontWeight = FontWeight.SemiBold)
             }
         }
-        } // End of scrollable content column
     }
 }
