@@ -11,7 +11,7 @@ object AIService {
     // Get your API key from: https://aistudio.google.com/app/apikey
     private const val GEMINI_API_KEY = "AIzaSyBG3hNKsGFESCTByeDarVr9QQkvwi33TmI"  // Replace with your actual API key
     
-    private val model by lazy {
+    private val model: GenerativeModel by lazy {
         GenerativeModel(
             modelName = "gemini-1.5-flash",
             apiKey = GEMINI_API_KEY,
