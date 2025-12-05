@@ -4,7 +4,9 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -83,24 +85,29 @@ fun TravelMateApp() {
                 BottomNavigationBar(
                     currentRoute = currentRoute,
                     onNavigate = { route ->
-                        navController.navigate(route) {
-                            // Pop up to the start destination of the graph to avoid building up a back stack
-                            popUpTo(Screen.Home.route) {
-                                saveState = true
+                        // Handle navigation with proper backstack management
+                        if (route != currentRoute) {
+                            navController.navigate(route) {
+                                // Pop up to home but don't include it to keep it in backstack
+                                popUpTo(navController.graph.startDestinationId) {
+                                    saveState = true
+                                }
+                                // Avoid multiple copies of the same destination
+                                launchSingleTop = true
+                                // Restore state when reselecting
+                                restoreState = true
                             }
-                            // Avoid multiple copies of the same destination when reselecting the same item
-                            launchSingleTop = true
-                            // Restore state when reselecting a previously selected item
-                            restoreState = true
                         }
                     }
                 )
             }
         }
     ) { paddingValues ->
-        NavGraph(
-            navController = navController,
-            startDestination = startDestination
-        )
+        Box(modifier = Modifier.padding(paddingValues)) {
+            NavGraph(
+                navController = navController,
+                startDestination = startDestination
+            )
+        }
     }
 }

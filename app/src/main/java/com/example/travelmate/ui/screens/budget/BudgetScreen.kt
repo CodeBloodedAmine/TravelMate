@@ -76,7 +76,7 @@ fun BudgetScreen() {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(180.dp)
+                .height(200.dp)
                 .background(
                     brush = Brush.linearGradient(
                         colors = listOf(Turquoise40, Turquoise40.copy(alpha = 0.8f))
@@ -92,7 +92,7 @@ fun BudgetScreen() {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 24.dp, vertical = 24.dp),
+                    .padding(horizontal = 20.dp, vertical = 20.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Row(

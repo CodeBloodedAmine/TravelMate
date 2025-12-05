@@ -6,10 +6,14 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -30,6 +34,17 @@ fun TravelsScreen(
     val viewModel: TravelViewModel = travelMateViewModel()
     val travels by viewModel.travels.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
+
+    var searchQuery by rememberSaveable { mutableStateOf("") }
+    val filteredTravels = remember(travels, searchQuery) {
+        if (searchQuery.isBlank()) travels
+        else travels.filter { travel ->
+            val q = searchQuery.trim().lowercase()
+            travel.title.lowercase().contains(q) ||
+                travel.destination.lowercase().contains(q) ||
+                (travel.description ?: "").lowercase().contains(q)
+        }
+    }
     
     // Get user role for permission check
     val userRole = SessionManager.getUserRole()
@@ -44,12 +59,13 @@ fun TravelsScreen(
             if (isOrganiser) {
                 FloatingActionButton(
                     onClick = onNavigateToCreateTravel,
-                    containerColor = Turquoise40
+                    containerColor = Turquoise40,
+                    modifier = Modifier.padding(16.dp)
                 ) {
                     Icon(
                         imageVector = Icons.Default.Add,
                         contentDescription = "Nouveau voyage",
-                        tint = MaterialTheme.colorScheme.onPrimary
+                        tint = Color.White
                     )
                 }
             }
@@ -59,7 +75,7 @@ fun TravelsScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(16.dp)
+                .padding(horizontal = 20.dp, vertical = 16.dp)
         ) {
             Text(
                 text = "Voyages",
@@ -67,6 +83,38 @@ fun TravelsScreen(
                 fontWeight = FontWeight.Bold,
                 color = Turquoise40,
                 modifier = Modifier.padding(bottom = 16.dp)
+            )
+
+            OutlinedTextField(
+                value = searchQuery,
+                onValueChange = { searchQuery = it },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp),
+                placeholder = { Text("Rechercher un voyage...") },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.Search,
+                        contentDescription = "Rechercher"
+                    )
+                },
+                trailingIcon = {
+                    if (searchQuery.isNotEmpty()) {
+                        IconButton(onClick = { searchQuery = "" }) {
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "Effacer"
+                            )
+                        }
+                    }
+                },
+                singleLine = true,
+                shape = RoundedCornerShape(14.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = Turquoise40,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+                    cursorColor = Turquoise40
+                )
             )
             
             if (isLoading) {
@@ -76,7 +124,7 @@ fun TravelsScreen(
                 ) {
                     CircularProgressIndicator(color = Turquoise40)
                 }
-            } else if (travels.isEmpty()) {
+            } else if (filteredTravels.isEmpty()) {
                 Box(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = androidx.compose.ui.Alignment.Center
@@ -86,22 +134,25 @@ fun TravelsScreen(
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
                         Text(
-                            text = "Aucun voyage",
+                            text = if (searchQuery.isNotEmpty()) "Aucun voyage trouvé" else "Aucun voyage",
                             fontSize = 18.sp,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                         )
-                        Text(
-                            text = "Créez votre premier voyage !",
-                            fontSize = 14.sp,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
-                        )
+                        if (searchQuery.isEmpty()) {
+                            Text(
+                                text = "Créez votre premier voyage !",
+                                fontSize = 14.sp,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                            )
+                        }
                     }
                 }
             } else {
                 LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    contentPadding = PaddingValues(bottom = 16.dp)
                 ) {
-                    items(travels) { travel ->
+                    items(filteredTravels) { travel ->
                         TravelCard(
                             travel = travel,
                             onClick = { onNavigateToTravelDetail(travel.id) }
@@ -126,13 +177,16 @@ fun TravelCard(
     
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        shape = RoundedCornerShape(20.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        )
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
+                .padding(20.dp)
         ) {
             Text(
                 text = travel.title,

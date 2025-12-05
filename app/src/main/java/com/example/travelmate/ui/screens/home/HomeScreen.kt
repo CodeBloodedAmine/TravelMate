@@ -73,21 +73,12 @@ fun HomeScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(Color(0xFFF8F9FA))
-            .verticalScroll(scrollState)
     ) {
         // Header avec effet de parallaxe
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(280.dp)
-                .graphicsLayer {
-                    translationY = scrollState.value * 0.5f
-                }
-                .drawWithCache {
-                    onDrawBehind {
-                        headerHeight = size.height
-                    }
-                }
+                .height(260.dp)
                 .background(
                     brush = Brush.verticalGradient(
                         colors = listOf(
@@ -106,7 +97,8 @@ fun HomeScreen(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 24.dp, vertical = 24.dp)
+                    .padding(horizontal = 20.dp)
+                    .padding(top = 20.dp, bottom = 24.dp)
             ) {
                 // Top bar
                 Row(
@@ -220,13 +212,13 @@ fun HomeScreen(
             }
         }
 
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // Content
+        // Content with scrolling
         Column(
             modifier = Modifier
-                .fillMaxWidth()
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
                 .padding(horizontal = 24.dp)
+                .padding(top = 24.dp)
         ) {
             // Header section
             Row(
