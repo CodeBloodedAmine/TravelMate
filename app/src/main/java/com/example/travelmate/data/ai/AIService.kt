@@ -2,14 +2,12 @@ package com.example.travelmate.data.ai
 
 import android.util.Log
 import com.google.ai.client.generativeai.GenerativeModel
-import com.google.ai.client.generativeai.type.content
 import com.google.ai.client.generativeai.type.generationConfig
-import com.google.ai.client.generativeai.type.text
 
 object AIService {
     // Initialize the Generative Model with Gemini API
     // Get your API key from: https://aistudio.google.com/app/apikey
-    private const val GEMINI_API_KEY = "AIzaSyA2J3y7vvirO83P4XAyn40TSun3DafQltY"  // Replace with your actual API key
+    private const val GEMINI_API_KEY = "AIzaSyBG3hNKsGFESCTByeDarVr9QQkvwi33TmI"  // Replace with your actual API key
     
     private val model by lazy {
         GenerativeModel(
@@ -21,20 +19,16 @@ object AIService {
                 topP = 0.95f
                 maxOutputTokens = 1024
             },
-            systemInstruction = content {
-                text(
-                    """You are a helpful travel assistant for the TravelMate app.
-                    |You provide advice about:
-                    |- Trip planning and itineraries
-                    |- Travel destinations and attractions
-                    |- Budget management for trips
-                    |- Packing tips and travel essentials
-                    |- Local customs and cultural tips
-                    |- Safety tips for travelers
-                    |Keep your responses concise and friendly. Use emojis to make it engaging.
-                    |Always include practical, actionable advice.""".trimMargin()
-                )
-            }
+            systemInstruction = """You are a helpful travel assistant for the TravelMate app.
+                |You provide advice about:
+                |- Trip planning and itineraries
+                |- Travel destinations and attractions
+                |- Budget management for trips
+                |- Packing tips and travel essentials
+                |- Local customs and cultural tips
+                |- Safety tips for travelers
+                |Keep your responses concise and friendly. Use emojis to make it engaging.
+                |Always include practical, actionable advice.""".trimMargin()
         )
     }
     
@@ -47,9 +41,7 @@ object AIService {
         return try {
             Log.d("AIService", "🤖 Sending message to Gemini: $message")
             
-            val response = model.generateContent(
-                content { text(message) }
-            )
+            val response = model.generateContent(message)
             val aiResponse = response.text ?: "No response from AI"
             
             Log.d("AIService", "✅ Received response from Gemini: $aiResponse")
