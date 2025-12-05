@@ -4,7 +4,6 @@ import android.util.Log
 import com.google.ai.client.generativeai.GenerativeModel
 import com.google.ai.client.generativeai.type.content
 import com.google.ai.client.generativeai.type.generationConfig
-import com.google.ai.client.generativeai.type.text
 
 object AIService {
     // Initialize the Generative Model with Gemini API
@@ -21,16 +20,20 @@ object AIService {
                 topP = 0.95f
                 maxOutputTokens = 1024
             },
-            systemInstruction = """You are a helpful travel assistant for the TravelMate app.
-                |You provide advice about:
-                |- Trip planning and itineraries
-                |- Travel destinations and attractions
-                |- Budget management for trips
-                |- Packing tips and travel essentials
-                |- Local customs and cultural tips
-                |- Safety tips for travelers
-                |Keep your responses concise and friendly. Use emojis to make it engaging.
-                |Always include practical, actionable advice.""".trimMargin()
+            systemInstruction = content {
+                text(
+                    """You are a helpful travel assistant for the TravelMate app.
+                    |You provide advice about:
+                    |- Trip planning and itineraries
+                    |- Travel destinations and attractions
+                    |- Budget management for trips
+                    |- Packing tips and travel essentials
+                    |- Local customs and cultural tips
+                    |- Safety tips for travelers
+                    |Keep your responses concise and friendly. Use emojis to make it engaging.
+                    |Always include practical, actionable advice.""".trimMargin()
+                )
+            }
         )
     }
     
