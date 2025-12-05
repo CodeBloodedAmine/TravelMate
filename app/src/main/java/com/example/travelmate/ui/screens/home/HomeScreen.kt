@@ -16,6 +16,7 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -50,6 +51,19 @@ fun HomeScreen(
     val viewModel: HomeViewModel = travelMateViewModel()
     val travels by viewModel.travels.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
+
+    var searchQuery by rememberSaveable { mutableStateOf("") }
+    val filteredTravels = remember(travels, searchQuery) {
+        if (searchQuery.isBlank()) travels
+        else {
+            val q = searchQuery.trim().lowercase()
+            travels.filter { travel ->
+                travel.title.lowercase().contains(q) ||
+                    travel.destination.lowercase().contains(q) ||
+                    (travel.description ?: "").lowercase().contains(q)
+            }
+        }
+    }
     
     // Get user role for permission check
     val userRole = SessionManager.getUserRole()
@@ -147,41 +161,41 @@ fun HomeScreen(
 
                 Spacer(modifier = Modifier.height(32.dp))
 
-                // Search bar
-                Surface(
+                // Search bar (local filter)
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = { searchQuery = it },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(56.dp)
-                        .shadow(
-                            elevation = 8.dp,
-                            shape = RoundedCornerShape(16.dp),
-                            clip = true
-                        ),
-                    shape = RoundedCornerShape(16.dp),
-                    color = Color.White,
-                    onClick = onNavigateToSearch
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(horizontal = 16.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
+                        .height(56.dp),
+                    placeholder = { Text("Rechercher un voyage...") },
+                    leadingIcon = {
                         Icon(
                             imageVector = Icons.Default.Search,
                             contentDescription = "Rechercher",
-                            tint = Color.Gray,
-                            modifier = Modifier.size(20.dp)
+                            tint = Color.Gray
                         )
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Text(
-                            text = "Rechercher un voyage, une activité...",
-                            fontSize = 14.sp,
-                            color = Color.Gray,
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
-                }
+                    },
+                    trailingIcon = {
+                        if (searchQuery.isNotEmpty()) {
+                            IconButton(onClick = { searchQuery = "" }) {
+                                Icon(
+                                    imageVector = Icons.Default.Close,
+                                    contentDescription = "Effacer",
+                                    tint = Color.Gray
+                                )
+                            }
+                        }
+                    },
+                    singleLine = true,
+                    shape = RoundedCornerShape(16.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = Color.White.copy(alpha = 0.8f),
+                        unfocusedBorderColor = Color.White.copy(alpha = 0.5f),
+                        cursorColor = Color.White
+                    ),
+                    textStyle = LocalTextStyle.current.copy(color = Color.White)
+                )
 
                 Spacer(modifier = Modifier.height(32.dp))
 
@@ -258,20 +272,36 @@ fun HomeScreen(
                         modifier = Modifier.size(48.dp)
                     )
                 }
-            } else if (travels.isEmpty()) {
-                EmptyTravelState(onCreateTravel = onNavigateToCreateTravel)
+            } else if (filteredTravels.isEmpty()) {
+                if (searchQuery.isNotEmpty()) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(200.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "Aucun voyage trouvé",
+                            fontSize = 16.sp,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                        )
+                    }
+                } else {
+                    EmptyTravelState(onCreateTravel = onNavigateToCreateTravel)
+                }
             } else {
                 // Featured travel (first one)
-                if (travels.isNotEmpty()) {
+                val featured = filteredTravels.firstOrNull()
+                featured?.let { travel ->
                     FeaturedTravelCard(
-                        travel = travels.first(),
-                        onClick = { onNavigateToTravelDetail(travels.first().id) }
+                        travel = travel,
+                        onClick = { onNavigateToTravelDetail(travel.id) }
                     )
                     Spacer(modifier = Modifier.height(24.dp))
                 }
 
                 // Other travels
-                if (travels.size > 1) {
+                if (filteredTravels.size > 1) {
                     Text(
                         text = "Autres voyages",
                         fontSize = 18.sp,
@@ -284,7 +314,7 @@ fun HomeScreen(
                         horizontalArrangement = Arrangement.spacedBy(16.dp),
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        items(travels.drop(1)) { travel ->
+                        items(filteredTravels.drop(1)) { travel ->
                             SmallTravelCard(
                                 travel = travel,
                                 onClick = { onNavigateToTravelDetail(travel.id) }
